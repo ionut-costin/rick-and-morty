@@ -11,16 +11,10 @@ import Combine
 import RickMortySwiftApi
 
 class CharactersViewModel: ObservableObject {
-    private let api: API
-    private let filterSubject: CurrentValueSubject<RMCharacterFilter, Never>
-    private let characterSelectedSubject: PassthroughSubject<RMCharacterModel, Never>
-
-    private var subscriptions: [AnyCancellable] = []
-
-    @Published var isLoading = false
-    @Published var search: String = ""
-    @Published public var characters: [RMCharacterModel] = []
-    @Published var error: Error?
+    // MARK: - Did Sets
+    var filter = RMCharacterFilter() {
+        didSet { fetchCharacters() }
+    }
 
     var characterSelected: RMCharacterModel? {
         didSet {
@@ -29,12 +23,25 @@ class CharactersViewModel: ObservableObject {
         }
     }
 
-    init(api: API,
-         filterSubject: CurrentValueSubject<RMCharacterFilter, Never>,
-         characterSelectedSubject: PassthroughSubject<RMCharacterModel, Never>) {
+    // MARK: - Properties
+    private let api: API
+
+    let showFilterSubject = PassthroughSubject<Bool, Never>()
+    lazy var showFilerPublisher = showFilterSubject.eraseToAnyPublisher()
+
+    private let characterSelectedSubject = PassthroughSubject<RMCharacterModel, Never>()
+    lazy var characterSelectedPublisher = characterSelectedSubject.eraseToAnyPublisher()
+
+    private var subscriptions: [AnyCancellable] = []
+
+    @Published var isLoading = false
+    @Published var search: String = ""
+    @Published public var characters: [RMCharacterModel] = []
+    @Published var error: Error?
+
+    // MARK: - Init
+    init(api: API) {
         self.api = api
-        self.filterSubject = filterSubject
-        self.characterSelectedSubject = characterSelectedSubject
 
         setSubscribers()
     }
@@ -43,26 +50,12 @@ class CharactersViewModel: ObservableObject {
         $search
             .dropFirst()
             .debounce(for: 0.5, scheduler: DispatchQueue.main)
-            .sink { search in
-                let currentFilter = self.filterSubject.value
-                let newFilter = RMCharacterFilter(name: search.trimmingCharacters(in: .whitespacesAndNewlines),
-                                                  status: Status(rawValue: currentFilter.status) ?? .none,
-                                                  species: currentFilter.species,
-                                                  type: currentFilter.type,
-                                                  gender: Gender(rawValue: currentFilter.gender) ?? .none)
-                self.filterSubject.send(newFilter)
-            }
-            .store(in: &subscriptions)
-
-        filterSubject
-            .dropFirst()
-            .sink { filter in
-                self.fetchCharacters(filter: filter)
-            }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .assign(to: \.filter.name, on: self)
             .store(in: &subscriptions)
     }
 
-    public func fetchCharacters(filter: RMCharacterFilter = RMCharacterFilter()) {
+    public func fetchCharacters() {
         isLoading = true
         Task { @MainActor in
             do {
@@ -75,5 +68,3 @@ class CharactersViewModel: ObservableObject {
         }
     }
 }
-
-

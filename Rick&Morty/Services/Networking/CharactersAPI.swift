@@ -1,5 +1,5 @@
 //
-//  MainAPI.swift
+//  CharactersAPI.swift
 //  Rick&Morty
 //
 //  Created by Ionut Andrei COSTIN on 27.04.2023.
@@ -8,7 +8,7 @@
 import Foundation
 import RickMortySwiftApi
 
-class MainAPI: API {
+class CharactersAPI: API {
     private let rmClient = RMClient()
 
     func fetchCharacters(filter: RMCharacterFilter) async throws -> [RMCharacterModel] {

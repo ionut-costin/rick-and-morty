@@ -9,7 +9,8 @@ import UIKit
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-    
+
+    #warning("I might have cheated by using the RickAndMortySwiftAPI library :). If I would have had more time I would have implemented the network functionality myself with proper pagination")
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         return true

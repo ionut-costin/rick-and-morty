@@ -12,25 +12,20 @@ import RickMortySwiftApi
 
 final class Rick_MortyTests: XCTestCase {
 
+    var charactersViewModel: CharactersViewModel!
+
     var subscriptions = Set<AnyCancellable>()
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        charactersViewModel = CharactersViewModel(api: CharactersAPI())
     }
 
     override func tearDownWithError() throws {
+        charactersViewModel = nil
         subscriptions = []
     }
 
     func testCharactersFetching() throws {
-        let api = MainAPI()
-        let filterSubject = CurrentValueSubject<RMCharacterFilter, Never>(RMCharacterFilter())
-        let characterSelectedSubject = PassthroughSubject<RMCharacterModel, Never>()
-
-        let charactersViewModel = CharactersViewModel(api: api,
-                                                      filterSubject: filterSubject,
-                                                      characterSelectedSubject: characterSelectedSubject)
-
         let expectation = self.expectation(description: #function)
 
         var results: [RMCharacterModel] = []
@@ -47,7 +42,28 @@ final class Rick_MortyTests: XCTestCase {
 
         waitForExpectations(timeout: 2, handler: nil)
 
-        XCTAssert(!results.isEmpty, "Characters fetch failed")
+        XCTAssert(results.count == 826, "Characters fetch failed!")
+    }
+
+    func testCharactersFilter() {
+        let expectation = self.expectation(description: #function)
+
+        var results: [RMCharacterModel] = []
+
+        charactersViewModel.$characters
+            .dropFirst()
+            .sink { characters in
+                results = characters
+                expectation.fulfill()
+            }
+            .store(in: &subscriptions)
+
+        charactersViewModel.filter = RMCharacterFilter(status: .alive)
+
+        waitForExpectations(timeout: 2, handler: nil)
+
+        print(results.count)
+        XCTAssert(results.count == 439, "Characters filter failed!")
     }
 
 }

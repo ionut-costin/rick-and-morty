@@ -11,7 +11,6 @@ import RickMortySwiftApi
 
 struct CharactersView: View {
     @StateObject var viewModel: CharactersViewModel
-    let showFilter: PassthroughSubject<Bool, Never>
 
     var body: some View {
         ZStack {
@@ -26,7 +25,7 @@ struct CharactersView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Filter") {
-                    showFilter.send(true)
+                    viewModel.showFilterSubject.send(true)
                 }
             }
         }

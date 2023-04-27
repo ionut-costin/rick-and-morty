@@ -13,10 +13,7 @@ import RickMortySwiftApi
 class CharactersCoordinator: Coordinator {
 
     private let window: UIWindow
-
-    private let characterFilter = CurrentValueSubject<RMCharacterFilter, Never>(RMCharacterFilter())
-    private let showFilter = PassthroughSubject<Bool, Never>()
-    private let characterSelected = PassthroughSubject<RMCharacterModel, Never>()
+    private let charactersViewModel = CharactersViewModel(api: CharactersAPI())
 
     private var subscriptions: [AnyCancellable] = []
 
@@ -30,35 +27,36 @@ class CharactersCoordinator: Coordinator {
     }
 
     private func setSubscriptions() {
-        showFilter
-            .eraseToAnyPublisher()
-            .sink { value in
-                guard value else { return }
-                let viewModel = CharacterFilterViewModel(filterSubject: self.characterFilter)
-                let view = CharacterFilterView(viewModel: viewModel)
-                let viewController = UIHostingController(rootView: view)
-                self.navigationController.pushViewController(viewController, animated: true)
+        charactersViewModel.showFilerPublisher
+            .sink { show in
+                guard show else { return }
+                self.showFilterView()
             }
             .store(in: &subscriptions)
 
-        characterSelected
+        charactersViewModel.characterSelectedPublisher
             .debounce(for: 0.1, scheduler: DispatchQueue.main)
-            .sink { character in
-                let view = CharacterDetailsView(character: character)
-                let viewController = UIHostingController(rootView: view)
-                self.navigationController.pushViewController(viewController, animated: true)
-            }
+            .sink(receiveValue: showCharacterDetails(_:))
             .store(in: &subscriptions)
     }
 
     func start() {
-        let viewModel = CharactersViewModel(api: MainAPI(),
-                                            filterSubject: self.characterFilter,
-                                            characterSelectedSubject: self.characterSelected)
-        let view = CharactersView(viewModel: viewModel, showFilter: showFilter)
+        let view = CharactersView(viewModel: self.charactersViewModel)
         let viewController = UIHostingController(rootView: view)
         navigationController.viewControllers = [viewController]
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
+    }
+
+    func showFilterView() {
+        let view = CharacterFilterView(viewModel: self.charactersViewModel)
+        let viewController = UIHostingController(rootView: view)
+        navigationController.pushViewController(viewController, animated: true)
+    }
+
+    func showCharacterDetails(_ character: RMCharacterModel) {
+        let view = CharacterDetailsView(character: character)
+        let viewController = UIHostingController(rootView: view)
+        navigationController.pushViewController(viewController, animated: true)
     }
 }

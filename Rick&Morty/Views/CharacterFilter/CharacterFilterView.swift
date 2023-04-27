@@ -10,8 +10,17 @@ import SwiftUI
 import RickMortySwiftApi
 
 struct CharacterFilterView: View {
+    private let statuses: [Status] = [Status.none, .alive, .dead]
+    private let genders: [Gender] = [Gender.none, .male, .female, .genderless]
+
     @Environment(\.presentationMode) private var presentationMode
-    @StateObject var viewModel: CharacterFilterViewModel
+    @StateObject var viewModel: CharactersViewModel
+    @State var filter: RMCharacterFilter
+
+    init(viewModel: CharactersViewModel) {
+        self._viewModel = StateObject(wrappedValue: viewModel)
+        self._filter = State(initialValue: viewModel.filter)
+    }
 
     var body: some View {
         VStack(spacing: 8) {
@@ -23,7 +32,7 @@ struct CharacterFilterView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Done") {
-                    viewModel.updateFilter()
+                    viewModel.filter = filter
                     presentationMode.wrappedValue.dismiss()
                 }
             }
@@ -35,8 +44,8 @@ struct CharacterFilterView: View {
     var statusView: some View {
         VStack(alignment: .leading) {
             Text("Status")
-            Picker("Status", selection: $viewModel.status) {
-                ForEach(viewModel.statuses, id: \.self) {
+            Picker("Status", selection: $filter.status) {
+                ForEach(statuses, id: \.self) {
                     Text(($0 == .none ? "all" : $0.rawValue).capitalized)
                 }
             }
@@ -47,8 +56,8 @@ struct CharacterFilterView: View {
     var genderView: some View {
         VStack(alignment: .leading) {
             Text("Gender")
-            Picker("Gender", selection: $viewModel.gender) {
-                ForEach(viewModel.genders, id: \.self) {
+            Picker("Gender", selection: $filter.gender) {
+                ForEach(genders, id: \.self) {
                     Text(($0 == .none ? "all" : $0.rawValue).capitalized)
                 }
             }
@@ -59,7 +68,7 @@ struct CharacterFilterView: View {
     var speciesView: some View {
         VStack(alignment: .leading) {
             Text("Species")
-            TextField("All species", text: $viewModel.species)
+            TextField("All species", text: $filter.species)
         }
     }
 }
