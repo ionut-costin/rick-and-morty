@@ -19,7 +19,7 @@ class CharactersViewModel: ObservableObject {
 
     @Published var isLoading = false
     @Published var search: String = ""
-    @Published var characters: [RMCharacterModel] = []
+    @Published public var characters: [RMCharacterModel] = []
     @Published var error: Error?
 
     var characterSelected: RMCharacterModel? {
@@ -62,7 +62,7 @@ class CharactersViewModel: ObservableObject {
             .store(in: &subscriptions)
     }
 
-    func fetchCharacters(filter: RMCharacterFilter = RMCharacterFilter()) {
+    public func fetchCharacters(filter: RMCharacterFilter = RMCharacterFilter()) {
         isLoading = true
         Task { @MainActor in
             do {
